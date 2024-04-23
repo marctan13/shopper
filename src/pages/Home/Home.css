@@ -1,0 +1,96 @@
+body{
+  font-family: 'Poppins';
+}
+
+.home {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* background-color: #9394be; */
+    background-color: white;
+  
+    .home-container {
+      height: 100%;
+      width: 100%;
+  
+      .categories {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: row;
+  
+        ul {
+          display: flex;
+          flex-direction: row;
+          text-decoration: none;
+          list-style: none;
+        }
+  
+        li {
+          padding: 1.5em;
+          margin: 1em;
+          border-radius: 10px;
+          background-color: #f7d9d9;
+  
+          &:hover {
+            cursor: pointer;
+          }
+        }
+      }
+  
+      .products {
+        display: grid;
+        grid-template-columns: auto auto auto auto;
+        /* column-gap: 30px; */
+  
+        .productCard {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          flex-direction: column;
+          /* background-color: #ffa7a7; */
+          /* background-color: white; */
+          margin: 5em 1em 0 1em;
+          text-decoration: none;
+  
+          .productImg {
+            display: flex;
+            height: 20rem;
+            width: 20rem;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1em;
+            padding-bottom: 5px;
+            background-color: transparent;
+          }
+  
+          .title-info {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            width: 50%;
+            align-items: center;
+            justify-content: space-around;
+            /* border: 1px solid black; */
+  
+            span {
+              display: flex;
+              font-size: 15px;
+              font-weight: bold;
+              gap: 10px;
+            }
+          }
+          .buttons {
+            display: flex;
+            justify-content: space-between;
+            margin: 1em;
+            gap: 20px;
+          }
+        }
+
+        .productCard:hover{
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+      }
+    }
+  }

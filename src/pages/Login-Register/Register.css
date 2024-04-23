@@ -1,0 +1,36 @@
+.auth-container {
+  background-size: cover;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #53a6f4;
+}
+
+.auth-formContainer {
+  display: flex;
+  align-items: center;
+  background-color: #5188b9;
+  padding: 20px 60px;
+  border-radius: 10px;
+  /* flex-direction: column; */
+  /* margin-right: 5em; */
+  /* gap: 10px; */
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.register-input {
+  padding: 15px;
+  width: 250px;
+}
+
+.title{
+  font-size: 3em;
+}
