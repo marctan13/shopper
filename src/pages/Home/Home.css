@@ -6,8 +6,8 @@ body{
     display: flex;
     align-items: center;
     justify-content: center;
-    /* background-color: #9394be; */
-    background-color: white;
+    background-color: #9394be;
+    /* background-color: white; */
   
     .home-container {
       height: 100%;
