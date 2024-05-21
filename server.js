@@ -1,15 +1,16 @@
-const express = require("express");
-const cors = require("cors");
-const mysql = require("mysql2/promise");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
-const bodyParser = require("body-parser");
+import express from "express";
+import cors from "cors";
+import mysql from "mysql2/promise"; // Note: No need to specify "/promise" since you're using mysql2 as a Promise.
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import bodyParser from "body-parser";
+import dotenv from "dotenv"; // Add import for dotenv
 
 // Allows us to access the .env
-require("dotenv").config();
+dotenv.config();
 
 const app = express();
-const port = process.env.PORT; // default port to listen
+const port = process.env.PORT || 3000; // default port to listen
 
 const corsOptions = {
   origin: "*",
@@ -23,12 +24,24 @@ const pool = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  port: 3306,
 });
 
 app.use(cors(corsOptions));
 
 // Makes Express parse the JSON body of any requests and adds the body to the req object
 app.use(bodyParser.json());
+
+// Test connection route before any middleware that requires auth
+app.get("/test-connection", async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT 1 + 1 AS solution");
+    res.json({ success: true, solution: rows[0].solution });
+  } catch (err) {
+    console.error("Error in /test-connection:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 app.use(async (req, res, next) => {
   try {
@@ -54,6 +67,7 @@ app.use(async (req, res, next) => {
   }
 });
 
+
 app.get("/test", async (req, res) => {
   const car = {
     make: "Honda",
@@ -68,27 +82,44 @@ app.get("/test", async (req, res) => {
 });
 
 // Hashes the password and inserts the info into the `user` table
-app.post("/register", async function (req, res) {
+
+const checkEmailUniqueness = async (email) => {
+  const [[user]] = await pool.query('SELECT email FROM users WHERE email = ?', [email]);
+  return !user;
+};
+
+// /register endpoint in Express
+app.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required." });
+    }
 
-    // Insert user into the database
-    await req.db.query(
-      `INSERT INTO users (email, password) VALUES (?, ?)`,
-      [email, hashedPassword]
-    );
+    const isEmailUnique = await checkEmailUniqueness(email);
+
+    if (!isEmailUnique) {
+      return res.status(400).json({ error: "Email already exists." });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await pool.query(`INSERT INTO users (email, password) VALUES (?,?)`, [email, hashedPassword]);
 
     res.json({ success: true });
   } catch (err) {
-    console.log("Error in /register", err);
-    res.status(500).json({ error: "Registration failed" });
+    console.error("Error in /register:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
+// app.get("/register", (req, res) => {
+//   // Handle GET requests to the "/register" endpoint
+//   res.send("Register page");
+// });
 
+
+//log in user
 app.post("/log-in", async function (req, res) {
   try {
     const { username, password: userEnteredPassword } = req.body;
@@ -128,34 +159,32 @@ app.post("/log-in", async function (req, res) {
 app.use(async function verifyJwt(req, res, next) {
   const { authorization: authHeader } = req.headers;
 
-  if (!authHeader) res.json("Invalid authorization, no authorization headers");
+  if (!authHeader) {
+    console.error("Missing authorization header");
+    // Allow access to the register endpoint without requiring JWT token
+    if (req.path === "/register") {
+      return next();
+    }
+    return res.status(401).json({ error: "Invalid authorization, no authorization headers" });
+  }
 
-  // const [scheme, jwtToken] = authHeader.split(" ");
+  const [scheme, jwtToken] = authHeader.split(" ");
 
-  if (scheme !== "Bearer")
-    res.json("Invalid authorization, invalid authorization scheme");
+  if (scheme !== "Bearer") {
+    console.error("Invalid authorization scheme");
+    return res.status(401).json({ error: "Invalid authorization, invalid authorization scheme" });
+  }
 
   try {
     const decodedJwtObject = jwt.verify(jwtToken, process.env.JWT_KEY);
-
     req.user = decodedJwtObject;
+    next();
   } catch (err) {
-    console.log(err);
-    if (
-      err.message &&
-      (err.message.toUpperCase() === "INVALID TOKEN" ||
-        err.message.toUpperCase() === "JWT EXPIRED")
-    ) {
-      req.status = err.status || 500;
-      req.body = err.message;
-      req.app.emit("jwt-error", err, req);
-    } else {
-      throw (err.status || 500, err.message);
-    }
+    console.error("JWT verification error:", err);
+    return res.status(401).json({ error: "Invalid JWT token" });
   }
-
-  await next();
 });
+
 
 app.post("/car", async (req, res) => {
   const { newMakeValue, newModelValue, newYearValue } = req.body;

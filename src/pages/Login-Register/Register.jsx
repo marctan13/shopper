@@ -18,22 +18,17 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     const email = emailRef.current.value;
     const password = passwordRef.current.value;
-    const verifyPassword = verifyPasswordRef.current.value;
-
-    // Validate passwords...
-    if (password !== verifyPassword) {
-      setVerifyPasswordError("Passwords do not match");
-      return;
-    }
-
+  
+    // Validate emails and passwords here...
+  
     try {
       setLoading(true);
-
+  
       // Make HTTP request to register endpoint
-      const response = await fetch("http://localhost:5173/register", {
+      const response = await fetch(`/api/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,17 +36,17 @@ function Register() {
         body: JSON.stringify({
           email,
           password,
-          cartItems, // Include cartItems in the registration request payload
         }),
       });
-
-      const data = await response.json();
-      if (response.ok) {
+  
+      if (!response.ok) {
+        const data = await response.json();
+        console.log("Data:", data);
+        setMessage(data.error || "Registration failed. Please try again later.");
+      } else {
         setMessage("Registration successful!");
         // Redirect user to login page
         navigate("/login");
-      } else {
-        setMessage("Registration failed. Please try again later.");
       }
       setLoading(false);
     } catch (error) {
@@ -60,7 +55,7 @@ function Register() {
       setLoading(false);
     }
   };
-
+  
   return (
     <div className="auth-container">
       <div className="auth-formContainer">
